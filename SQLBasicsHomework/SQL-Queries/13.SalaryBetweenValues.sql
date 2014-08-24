@@ -1,0 +1,8 @@
+SELECT Salary
+FROM Employees
+WHERE Salary BETWEEN 20000 AND 30000
+
+SELECT Salary
+FROM Employees
+WHERE Salary > 20000 
+AND Salary < 30000

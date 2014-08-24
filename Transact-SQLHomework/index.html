@@ -1,0 +1,421 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transact-SQL - Homework</title>
+
+    <!-- Styles -->
+    <link href="styles/bootstrap.css" rel="stylesheet">
+    <link href="styles/sb-admin.css" rel="stylesheet">
+    <link href="styles/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="alert alert-info">
+        <p>Transact-SQL - Homework</p>
+    </div>
+	
+    <div class="row">
+        <div class="col-lg-12" id="pinnedTasks">
+			<!--------------------------------->
+			<div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+					1. Create a database with two tables: 
+						Persons(Id(PK), FirstName, LastName, SSN) and 
+						Accounts(Id(PK), PersonId(FK), Balance). 
+					
+					Insert few records for testing. 
+					Write a stored procedure that selects the full names of all persons.</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="well">
+						<pre>
+							CREATE DATABASE BankingStuff
+
+							GO
+
+							USE BankingStuff
+
+							CREATE TABLE Persons ( 
+								ID int IDENTITY,
+								FirstName nvarchar(50) NOT NULL, 
+								LastName nvarchar(50) NOT NULL, 
+								SSN int NULL,
+								CONSTRAINT PK_PersonsID PRIMARY KEY(ID)
+							)
+
+							CREATE TABLE Accounts ( 
+								ID int IDENTITY,
+								PersonID int NOT NULL,
+								Balance int NULL,
+								CONSTRAINT PK_AccountsID PRIMARY KEY(ID)
+							)
+
+							GO
+
+							ALTER TABLE Accounts 
+							ADD CONSTRAINT FK_Persons_Accounts
+								FOREIGN KEY (PersonID) 
+								REFERENCES Persons(ID)
+
+							GO
+						</pre>
+					</div>
+					<div class="well">
+						<pre>
+							DECLARE @i int = 0
+
+							WHILE @i < 20 
+								BEGIN
+									SET @i = @i + 1
+									DECLARE @PersonID int
+
+									INSERT INTO 
+										Persons
+									VALUES
+										('Kencho' + CAST(RAND() * 100 AS VARCHAR),
+										 'Ivaylov' + CAST(RAND() * 100 AS VARCHAR),
+										  123456 + CAST(RAND() * 100 AS INT))
+
+									SET @PersonID = (SELECT SCOPE_IDENTITY())
+
+									INSERT INTO
+										Accounts
+									VALUES
+										(@PersonID, CAST(RAND() * 10000 AS INT))
+								END
+						</pre>
+					</div>
+					<div class="well">
+						<pre>
+							CREATE PROC GetFullName
+							AS
+								SELECT FirstName + ' ' + LastName AS FullName
+								FROM Persons
+								
+							EXEC GetFullName
+						</pre>
+					</div>
+                </div>
+            </div>
+			<!--------------------------------->
+			<div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">2. Create a stored procedure that accepts a number as a parameter and returns all persons who have more money in their accounts than the supplied number.</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="well">
+						<pre>
+							CREATE PROC GetPersonByMinBalance(@minBalance int) 
+							AS
+								SELECT *
+								FROM Persons p
+									INNER JOIN Accounts a
+										ON a.PersonID = p.ID
+								WHERE a.Balance >= @minBalance
+						</pre>
+					</div>
+					<div class="well">
+						<pre>
+							EXEC GetPersonByMinBalance 5000
+						</pre>
+					</div>
+                </div>
+            </div>
+			<!--------------------------------->
+			<div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">3. Create a function that accepts as parameters – sum, yearly interest rate and number of months. It calculate and return the new sum. Write a SELECT to test whether the function works as expected.</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="well">
+						<pre>
+							CREATE FUNCTION CalculateCreditSum(@sum float, @interest float, @months int) 
+							RETURNS float 
+							AS 
+								BEGIN
+									IF(@months > 12 OR @months < 1)
+									BEGIN
+										RETURN NULL
+									END
+									ELSE
+										DECLARE @result float
+										SET @result = @sum * (1 + (@interest / 100) * (CAST(@months AS float) / 12))
+										RETURN @result
+								END
+
+							GO
+							
+							SELECT dbo.CalculateCreditSum(1000,5,12)
+						</pre>
+					</div>
+                </div>
+            </div>
+			<!--------------------------------->
+			<div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">4. Create a stored procedure that uses the function from the previous example to give an interest to a person's account for one month. It should take the AccountId and the interest rate as parameters.</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="well">
+						<pre>
+							CREATE PROC GiveInterestToPerson(@accountId int, @interest float) 
+							AS
+								DECLARE @personBalance float
+								SET @personBalance = (SELECT Balance FROM Accounts WHERE ID = @accountId)
+
+								DECLARE @newBalance float
+								SET @newBalance = (dbo.CalculateCreditSum(@personBalance, @interest, 1))
+
+								--PRINT @personBalance
+								--PRINT dbo.CalculateCreditSum(@personBalance, @interest, 1)
+								--PRINT @newBalance
+
+								UPDATE 
+									Accounts
+								SET 
+									Balance = @newBalance
+								WHERE 
+									ID = @accountId
+
+							GO
+
+							EXEC GiveInterestToPerson 1, 5
+						</pre>
+					</div>
+                </div>
+            </div>
+			<!--------------------------------->
+			<div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">5. Add two more stored procedures WithdrawMoney( AccountId, money) and DepositMoney (AccountId, money) that operate in transactions.
+</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="well">
+						<pre>
+							CREATE PROC WithdrawMoney(@accountId int, @money float) 
+							AS
+								UPDATE 
+									Accounts
+								SET 
+									Balance = Balance - @money
+								WHERE 
+									ID = @accountId
+							GO
+
+							CREATE PROC DepositMoney(@accountId int, @money float) 
+							AS
+								UPDATE 
+									Accounts
+								SET 
+									Balance = Balance + @money
+								WHERE 
+									ID = @accountId
+							GO
+
+							EXEC WithdrawMoney 1, 500
+
+							EXEC DepositMoney 1, 500
+						</pre>
+					</div>
+                </div>
+            </div>
+			<!--------------------------------->
+			<div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">6. 
+					Create another table – Logs(LogID, AccountID, OldSum, NewSum). 
+					Add a trigger to the Accounts table that enters a new entry into the Logs table every time the sum on an account changes.</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="well">
+						<pre>
+							CREATE TABLE Logs ( 
+								LogId int IDENTITY NOT NULL, 
+								OldBalance float NULL, 
+								NewBalance float NULL,
+								AccountID int NOT NULL
+								CONSTRAINT PK_LogsId
+									PRIMARY KEY(LogId)
+							)
+
+							GO 
+
+							ALTER TABLE Logs 
+							ADD CONSTRAINT FK_Accounts_Logs
+								FOREIGN KEY (AccountID) 
+								REFERENCES Accounts(ID)
+						</pre>
+					</div>
+					<div class="well">
+						<pre>
+							CREATE TRIGGER tr_LogAccountChange 
+								ON Accounts
+								FOR INSERT, UPDATE
+							AS
+								DECLARE @AccountID int;
+								SET @AccountID = (SELECT i.ID FROM inserted i)
+
+								INSERT INTO Logs 
+									(OldBalance, NewBalance, AccountID)
+								VALUES (
+									(SELECT 
+										Balance
+									FROM deleted),
+
+									(SELECT 
+										Balance
+									FROM inserted),
+									@AccountID
+								)
+						</pre>
+					</div>
+					<div class="well">
+						<pre>
+							UPDATE 
+								Accounts
+							SET 
+								Balance = 5000
+							WHERE 
+								ID = 1
+						</pre>
+					</div>
+                </div>
+            </div>
+			<!--------------------------------->
+			<div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">7. Define a function in the database TelerikAcademy that returns all Employee's names (first or middle or last name) and all town's names that are comprised of given set of letters. Example 'oistmiahf' will return 'Sofia', 'Smith', … but not 'Rob' and 'Guy'.</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="well">
+						<pre>
+							CREATE FUNCTION IsComposedFromLetters(@letters nvarchar(50), @word nvarchar(50)) 
+							RETURNS bit 
+							AS 
+							BEGIN
+								DECLARE @isComposed bit = 1
+								DECLARE @i int = 1
+
+								WHILE @i <= LEN(@word)
+								BEGIN
+									IF CHARINDEX(SUBSTRING(@word, @i, 1), @letters) = 0
+									BEGIN
+										SET @isComposed = 0
+										BREAK
+									END
+
+									SET @i = @i + 1
+								END
+
+								RETURN @isComposed
+							END
+
+							GO
+
+							SELECT dbo.IsComposedFromLetters('abcd','dada')
+							SELECT dbo.IsComposedFromLetters('abcd','caca')
+							SELECT dbo.IsComposedFromLetters('abcd','Pesho')
+						</pre>
+					</div>
+					<div class="well">
+						<pre>
+							SELECT e.FirstName, t.Name
+							FROM Employees e
+								INNER JOIN Addresses a
+									ON e.AddressID = a.AddressID
+								INNER JOIN Towns t
+									ON a.TownID = t.TownID
+							WHERE dbo.IsComposedFromLetters('oistmiahf', t.Name) = 1
+						</pre>
+					</div>
+                </div>
+            </div>
+			<!--------------------------------->
+			<div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">8. Using database cursor write a T-SQL script that scans all employees and their addresses and prints all pairs of employees that live in the same town.</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="well">
+						<pre>
+							DECLARE empCursor CURSOR READ_ONLY 
+							FOR
+							  SELECT e.FirstName, e.LastName, t.Name, b.FirstName, b.LastName
+							  FROM Employees e
+								JOIN Addresses a
+									ON a.AddressID = e.AddressID
+								JOIN Towns t
+									ON t.TownID = a.TownID, Employees b
+								JOIN Addresses ad
+									ON b.AddressID = ad.AddressID
+								JOIN Towns t2
+									ON ad.TownID = t2.TownID
+							WHERE t.Name = t2.Name
+							AND e.EmployeeID <> b.EmployeeID
+							ORDER BY e.FirstName, b.FirstName
+
+							OPEN empCursor
+
+							DECLARE @firstName char(20), @lastName char(20), @town char(20), @firstName1 char(20), @lastName1 char(20)
+
+							FETCH NEXT FROM empCursor INTO @firstName, @lastName, @town, @firstName1, @lastName1
+
+							WHILE @@FETCH_STATUS = 0
+							  BEGIN
+								PRINT @firstName + ' ' + @lastName + ' and ' + @firstName1 + ' ' + @lastName1 + ' ' + @town
+								FETCH NEXT FROM empCursor 
+								INTO @firstName, @lastName, @town, @firstName1, @lastName1
+							  END
+
+							CLOSE empCursor
+							DEALLOCATE empCursor
+							GO
+						</pre>
+					</div>
+                </div>
+            </div>
+			<!--------------------------------->
+			<div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">9. * Write a T-SQL script that shows for each town a list of all employees that live in it.</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="well">
+						<pre>
+							* - SKIP, NO TIME!
+						</pre>
+					</div>
+                </div>
+            </div>
+			<!--------------------------------->
+			<div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">10. Define a .NET aggregate function StrConcat that takes as input a sequence of strings and return a single string that consists of the input strings separated by ',': SELECT StrConcat(FirstName + ' ' + LastName) FROM Employees</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="well">
+						<pre>
+							CREATE FUNCTION StrConcat(@inputText nvarchar(MAX), @separator nvarchar(10)) 
+							RETURNS nvarchar(MAX)
+							AS 
+							BEGIN
+								DECLARE @result nvarchar(MAX)
+								SET @result = REPLACE(@inputText, ' ', @separator)
+								RETURN @result
+							END
+
+							GO
+
+							SELECT dbo.StrConcat(FirstName + ' ' + LastName, ', ')
+							FROM Employees
+						</pre>
+					</div>
+                </div>
+            </div>
+        </div> <!--COL DIV-->
+    </div><!--ROW DIV-->
+</body>
+</html>
