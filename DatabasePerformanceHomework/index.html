@@ -1,0 +1,362 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Performance - Homework</title>
+
+    <!-- Styles -->
+    <link href="styles/bootstrap.css" rel="stylesheet">
+    <link href="styles/sb-admin.css" rel="stylesheet">
+    <link href="styles/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="alert alert-info">
+        <p>Database Performance - Homework</p>
+    </div>
+
+	<div class="alert alert-danger">
+        <p>NOTE: I am using SSD so my results may be faster than normal!</p>
+    </div>
+	
+    <div class="row">
+        <div class="col-lg-12" id="pinnedTasks">
+			<!--------------------------------->
+			<div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Creating the Logs table.</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="well">
+						<pre>
+						CREATE TABLE Logs(
+							ID int NOT NULL IDENTITY,
+							LogText nvarchar(300) NOT NULL,
+							LogDate datetime NOT NULL,
+							CONSTRAINT PK_Logs_ID PRIMARY KEY (ID)
+						)
+						</pre>
+					</div>
+                </div>
+            </div>
+			<!--------------------------------->
+			<div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Populating the Logs table.</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="well">
+						<pre>
+						SET NOCOUNT ON
+						DECLARE @RowCount int = 10000000
+
+						WHILE @RowCount > 0
+						BEGIN
+							DECLARE @Text nvarchar(100) = 'Log Text: ' + SUBSTRING(CONVERT(varchar(40), NEWID()),0,9)
+							DECLARE @Date datetime = DATEADD(day, (ABS(CHECKSUM(NEWID())) % 65530), 0)
+
+							INSERT INTO Logs(LogText, LogDate) 
+							VALUES(@Text, @Date)
+
+							SET @RowCount = @RowCount - 1
+						END
+						SET NOCOUNT OFF
+						</pre>
+					</div>
+					<div class="well">
+						<p>Execution time: 00:25:19</p>
+					</div>
+                </div>
+            </div>
+			<!--------------------------------->
+			<div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Query in date range WITHOUT index.</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="well">
+						<pre>
+						CHECKPOINT; DBCC DROPCLEANBUFFERS; -- Empty the SQL Server cache
+
+						SELECT COUNT(*)
+						FROM Logs
+						WHERE YEAR(LogDate) > 1990
+						AND YEAR(LogDate) < 2010
+						</pre>
+					</div>
+					<div class="well">
+						<p>Execution time: 00:00:02</p>
+					</div>
+                </div>
+            </div>
+			<!--------------------------------->
+			<div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Add index to LogDate.</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="well">
+						<pre>
+							CREATE INDEX IDX_Logs_LogDate ON Logs(LogDate)
+						</pre>
+					</div>
+					<div class="well">
+						<p>Execution time: 00:00:15</p>
+					</div>
+                </div>
+            </div>
+			<!--------------------------------->
+			<div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Repeating query in date range WITH index.</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="well">
+						<pre>
+							CHECKPOINT; DBCC DROPCLEANBUFFERS; -- Empty the SQL Server cache
+
+							SELECT COUNT(*)
+							FROM Logs
+							WHERE YEAR(LogDate) > 1990
+							AND YEAR(LogDate) < 2010
+						</pre>
+					</div>
+					<div class="well">
+						<p>Execution time: 00:00:01</p>
+					</div>
+                </div>
+            </div>
+			<!--------------------------------->
+			<div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Text search WITHOUT full text index.</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="well">
+						<pre>
+							CHECKPOINT; DBCC DROPCLEANBUFFERS; -- Empty the SQL Server cache
+
+							SELECT COUNT(*)
+							FROM Logs
+							WHERE LogText LIKE 'Log Text: 48%'
+						</pre>
+					</div>
+					<div class="well">
+						<p>Execution time: 00:00:02</p>
+					</div>
+                </div>
+				<div class="panel-body">
+                    <div class="well">
+						<pre>
+							CHECKPOINT; DBCC DROPCLEANBUFFERS; -- Empty the SQL Server cache
+
+							SELECT COUNT(*)
+							FROM Logs
+							WHERE LogText LIKE '%B3%'
+						</pre>
+					</div>
+					<div class="well">
+						<p>Execution time: 00:00:11</p>
+					</div>
+                </div>
+				<div class="panel-body">
+                    <div class="well">
+						<pre>
+							CHECKPOINT; DBCC DROPCLEANBUFFERS; -- Empty the SQL Server cache
+
+							SELECT COUNT(*)
+							FROM Logs
+							WHERE LogText LIKE '%F2'
+						</pre>
+					</div>
+					<div class="well">
+						<p>Execution time: 00:00:10</p>
+					</div>
+                </div>
+            </div>
+			<!--------------------------------->
+			<div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Add full text index.</h3>
+                </div>
+				<div class="panel-body">
+                    <div class="well">
+						<pre>
+						CREATE INDEX IDX_Logs_LogText ON Logs(LogText)
+						</pre>
+					</div>
+					<div class="well">
+						<p>Execution time: 00:00:50</p>
+					</div>
+                </div>
+                <div class="panel-body">
+                    <div class="well">
+						<pre>
+						CREATE FULLTEXT CATALOG LogsTextCatalog
+						WITH ACCENT_SENSITIVITY = OFF
+
+						CREATE FULLTEXT INDEX ON Logs(LogText)
+						KEY INDEX PK_Logs_ID
+						ON LogsTextCatalog
+						WITH CHANGE_TRACKING AUTO
+						</pre>
+					</div>
+					<div class="well">
+						<p>Execution time: 00:00:00</p>
+					</div>
+                </div>
+            </div>
+			<!--------------------------------->
+			<div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Text search WITH full text index.</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="well">
+						<pre>
+						CHECKPOINT; DBCC DROPCLEANBUFFERS; -- Empty the SQL Server cache
+
+						SELECT COUNT(*) 
+						FROM Logs
+						WHERE CONTAINS(LogText, '"48*"')
+						</pre>
+					</div>
+					<div class="well">
+						<p>Execution time: 00:00:00</p>
+					</div>
+                </div>
+				<div class="panel-body">
+                    <div class="well">
+						<pre>
+						CHECKPOINT; DBCC DROPCLEANBUFFERS; -- Empty the SQL Server cache
+
+						SELECT COUNT(*) 
+						FROM Logs
+						WHERE CONTAINS(LogText, '"*B3*"')
+						</pre>
+					</div>
+					<div class="well">
+						<p>Execution time: 00:00:00</p>
+					</div>
+                </div>
+            </div>
+			<!--------------------------------->
+			<div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Create MySQL Logs table.</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="well">
+						<pre>
+						CREATE TABLE Logs(
+						  id int NOT NULL AUTO_INCREMENT,
+						  LogText nvarchar(50),
+						  LogDate datetime,
+						  PRIMARY KEY (id, LogDate)
+						) PARTITION BY RANGE(YEAR(LogDate)) (
+							PARTITION p0 VALUES LESS THAN (1990),
+							PARTITION p2 VALUES LESS THAN (2000),
+							PARTITION p3 VALUES LESS THAN (2010),
+							PARTITION p4 VALUES LESS THAN MAXVALUE
+						);
+						</pre>
+					</div>
+					<div class="well">
+						<p>Query took 0.0888 sec</p>
+					</div>
+                </div>
+            </div>
+			<!--------------------------------->
+			<div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Populating the MySQL Logs table.</h3>
+                </div>
+                <div class="panel-body">
+                    <div class="well">
+						<pre>
+							DELIMITER $$
+							CREATE PROCEDURE PopulateLogs()
+							BEGIN
+								DECLARE counter INT;
+								SET counter = 1;
+
+								WHILE counter <= 100000 DO 
+
+									INSERT INTO Logs (LogText, LogDate) VALUES (MD5(counter), DATE_ADD('1980-01-01', INTERVAL 20950 * rand() DAY));
+
+									SET counter = counter + 1;
+								END WHILE;
+							END $$
+							DELIMITER ;
+						</pre>
+					</div>
+					<div class="well">
+						<pre>
+							CALL PopulateLogs()
+						</pre>
+					</div>
+					<div class="well">
+						<p>Query took 308.5570 sec</p>
+					</div>
+                </div>
+            </div>
+			<!--------------------------------->
+			<div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Date range searches.</h3>
+                </div>
+				<div class="panel-body">
+                    <div class="well">
+						<pre>
+							SELECT id FROM Logs WHERE YEAR(LogDate) > 2010
+						</pre>
+					</div>
+					<div class="well">
+						<p>Query took 0.0183 sec</p>
+					</div>
+                </div>
+                <div class="panel-body">
+                    <div class="well">
+						<pre>
+							SELECT id FROM Logs WHERE YEAR(LogDate) > 2010
+						</pre>
+					</div>
+					<div class="well">
+						<p>Query took 0.0183 sec</p>
+					</div>
+                </div>
+				<div class="panel-body">
+                    <div class="well">
+						<pre>
+							SELECT id FROM Logs WHERE YEAR(LogDate) < 1990
+						</pre>
+					</div>
+					<div class="well">
+						<p>Query took 0.0004 sec</p>
+					</div>
+                </div>
+				<div class="panel-body">
+                    <div class="well">
+						<pre>
+							SELECT id FROM Logs WHERE YEAR(LogDate) > 1991 AND YEAR(LogDate) < 1999
+						</pre>
+					</div>
+					<div class="well">
+						<p>Query took 0.0106 sec</p>
+					</div>
+                </div>
+				<div class="panel-body">
+                    <div class="well">
+						<pre>
+							SELECT id FROM Logs WHERE YEAR(LogDate) = 1995
+						</pre>
+					</div>
+					<div class="well">
+						<p>Query took 0.0063 sec</p>
+					</div>
+                </div>
+            </div>
+        </div> <!--COL DIV-->
+    </div><!--ROW DIV-->
+</body>
+</html>
