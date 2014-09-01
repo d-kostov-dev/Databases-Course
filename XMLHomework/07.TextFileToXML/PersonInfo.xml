@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<address-book name="My Addresses Book">
+	<addresses>
+		<address>
+			<name>Pesho Goshov</name>
+			<address>Sofia, Mladost 1a</address>
+			<phone>0878888888</phone>
+		</address>
+	</addresses>
+</address-book>
