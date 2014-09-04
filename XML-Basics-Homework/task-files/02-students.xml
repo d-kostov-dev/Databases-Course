@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<!--
+2. Create XML document students.xml, which contains structured description of students. 
+For eachstudent you should enter information for his 
+name,
+sex, 
+birth date, 
+phone, 
+email, 
+course, 
+specialty,
+faculty number 
+and a list of taken exams (exam name, tutor, score).
+-->
+<students name="Telerik Academy Students">
+  
+  <student>
+    <name>Pesho (koi drug)</name>
+    <sex>Shemale</sex>
+    <birthDate>01-10-1988</birthDate>
+    <phone>0888 777 666</phone>
+    <email>pesho@telerik.com</email>
+    <course>Telerik Academy</course>
+    <speciality>Hleb Development</speciality>
+    <facultyNumber>111000</facultyNumber>
+    <exams>
+      <exam>
+        <name>C#1</name>
+        <tutor>I.K.</tutor>
+        <score>320/500</score>
+      </exam>
+      <exam>
+        <name>C#2</name>
+        <tutor>I.K.</tutor>
+        <score>120/500</score>
+      </exam>
+      <exam>
+        <name>JavaScript Applications</name>
+        <tutor>I.K.</tutor>
+        <score>230/300</score>
+      </exam>
+    </exams>
+  </student>
+
+  <student>
+    <name>Gosho (kakva iznenada)</name>
+    <sex>Shemale</sex>
+    <birthDate>09-01-1989</birthDate>
+    <phone>0888 333 444</phone>
+    <email>gosho@telerik.com</email>
+    <course>Telerik Academy</course>
+    <speciality>Hleb Development</speciality>
+    <facultyNumber>123123</facultyNumber>
+    <exams>
+      <exam>
+        <name>C#1</name>
+        <tutor>I.K.</tutor>
+        <score>210/500</score>
+      </exam>
+      <exam>
+        <name>C#2</name>
+        <tutor>I.K.</tutor>
+        <score>320/500</score>
+      </exam>
+      <exam>
+        <name>JavaScript Applications</name>
+        <tutor>I.K.</tutor>
+        <score>190/300</score>
+      </exam>
+    </exams>
+  </student>
+  
+</students>
