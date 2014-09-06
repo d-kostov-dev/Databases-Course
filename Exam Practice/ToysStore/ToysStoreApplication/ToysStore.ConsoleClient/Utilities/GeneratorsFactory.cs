@@ -4,16 +4,15 @@
 
     using ToysStore.ConsoleClient.Interfaces;
     using ToysStore.ConsoleClient.RandomGenerators;
-    using ToysStore.Data;
 
     public class GeneratorsFactory : IGeneratorsFactory
     {
-        private readonly ToysStoreEntities databaseConnection;
+        private readonly DatabaseContext databaseConnection;
         private readonly IRandomValueGenerator randomGenerator;
         private readonly ILogger<string> logger;
 
         public GeneratorsFactory(
-            ToysStoreEntities databaseConnection, 
+            DatabaseContext databaseConnection, 
             IRandomValueGenerator randomGenerator, 
             ILogger<string> logger)
         {

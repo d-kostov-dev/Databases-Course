@@ -9,7 +9,7 @@
 
     public class ToysGenerator : DataGenerator
     {
-        public ToysGenerator(ToysStoreEntities databaseConnection, IRandomValueGenerator randomGenerator, ILogger<string> logger, int itemsCount)
+        public ToysGenerator(DatabaseContext databaseConnection, IRandomValueGenerator randomGenerator, ILogger<string> logger, int itemsCount)
             : base(databaseConnection, randomGenerator, logger, itemsCount)
         {
         }

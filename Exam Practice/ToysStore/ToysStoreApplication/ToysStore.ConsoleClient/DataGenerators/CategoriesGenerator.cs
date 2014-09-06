@@ -7,7 +7,7 @@
 
     public class CategoriesGenerator : DataGenerator
     {
-        public CategoriesGenerator(ToysStoreEntities databaseConnection, IRandomValueGenerator randomGenerator, ILogger<string> logger, int itemsCount)
+        public CategoriesGenerator(DatabaseContext databaseConnection, IRandomValueGenerator randomGenerator, ILogger<string> logger, int itemsCount)
             : base(databaseConnection, randomGenerator, logger, itemsCount)
         {
         }

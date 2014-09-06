@@ -7,7 +7,7 @@
 
     public class AgeRangesGenerator : DataGenerator
     {
-        public AgeRangesGenerator(ToysStoreEntities databaseConnection, IRandomValueGenerator randomGenerator, ILogger<string> logger, int itemsCount)
+        public AgeRangesGenerator(DatabaseContext databaseConnection, IRandomValueGenerator randomGenerator, ILogger<string> logger, int itemsCount)
             : base(databaseConnection, randomGenerator, logger, itemsCount)
         {
         }

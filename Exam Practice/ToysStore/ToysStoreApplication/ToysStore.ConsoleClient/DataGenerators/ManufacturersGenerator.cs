@@ -7,7 +7,7 @@
 
     public class ManufacturersGenerator : DataGenerator
     {
-        public ManufacturersGenerator(ToysStoreEntities databaseConnection, IRandomValueGenerator randomGenerator, ILogger<string> logger, int itemsCount)
+        public ManufacturersGenerator(DatabaseContext databaseConnection, IRandomValueGenerator randomGenerator, ILogger<string> logger, int itemsCount)
             : base(databaseConnection, randomGenerator, logger, itemsCount)
         {
         }

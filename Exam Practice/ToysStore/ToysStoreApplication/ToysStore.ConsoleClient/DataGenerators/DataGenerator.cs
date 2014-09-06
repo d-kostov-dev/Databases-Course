@@ -6,12 +6,12 @@
     public abstract class DataGenerator : IDataGenerator
     {
         private readonly IRandomValueGenerator random;
-        private readonly ILogger<string> logger; 
-        private readonly ToysStoreEntities databaseConnection;
+        private readonly ILogger<string> logger;
+        private readonly DatabaseContext databaseConnection;
         private int itemsCount;
 
         public DataGenerator(
-            ToysStoreEntities db, 
+            DatabaseContext db, 
             IRandomValueGenerator radnomGenerator, 
             ILogger<string> logger, 
             int itemsToCreateCount)
