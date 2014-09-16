@@ -1,0 +1,18 @@
+Connection string for "Cars" database: 
+<add name="DefaultDbConnectionString" connectionString="Data Source=.\NEWSQL;Initial Catalog=CarsDatabase;Integrated Security=True" providerName="System.Data.SqlClient" />
+<add name="ExpressDbConnectionString" connectionString="Data Source=.\SQLEXPRESS;Initial Catalog=CarsDatabase;Integrated Security=True" providerName="System.Data.SqlClient" />
+add name="GenericDbConnectionString" connectionString="Data Source=.;Initial Catalog=CarsDatabase;Integrated Security=True" providerName="System.Data.SqlClient" />
+	
+	
+Relationships for "Cars" database: (Car : Manufacturer - many to one)
+Relationships for "Cars" database: (Car : Dealer - many to one)
+Relationships for "Cars" database: (Dealer : City - many to many)
+
+
+Connection string for "CompanyEmployees" database: App.config file
+Relationships for "CompanyEmployees" database: (Employees : Departments - Many To One)
+Relationships for "CompanyEmployees" database: (Employees : Employees - Many To One)
+Relationships for "CompanyEmployees" database: (Employees : EmployeeProjects - One To Many)
+Relationships for "CompanyEmployees" database: (Employees : Reports - One To Many)
+Relationships for "CompanyEmployees" database: (EmployeeProjects : Projects - Many To Many)
+Query files: Solution\CompanyEmployees\DatabaseFiles\Queries
